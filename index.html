@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paket Data - Pembayaran QRIS</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 { text-align: center; margin-bottom: 8px; font-size: 28px; }
+  .sub { text-align: center; color: #aaa; margin-bottom: 24px; font-size: 14px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    margin: 0 auto 32px;
+  }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    transition: 0.2s;
+  }
+  .card:hover { transform: translateY(-4px); border-color: #00d4ff; }
+  .card .gb { font-size: 32px; font-weight: bold; color: #00d4ff; }
+  .card .label { font-size: 13px; color: #bbb; margin: 4px 0 12px; }
+  .card .price { font-size: 20px; font-weight: bold; color: #ffd700; margin-bottom: 14px; }
+  .card button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #00d4ff, #0077ff);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .card button:hover { opacity: 0.85; }
+
+  .qr-section {
+    max-width: 400px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+  }
+  .qr-section h2 { font-size: 18px; margin-bottom: 12px; }
+  .qr-section img {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 12px;
+    padding: 8px;
+  }
+  .qr-section p { font-size: 13px; color: #bbb; margin-top: 12px; }
+  .dana { font-weight: bold; color: #00d4ff; }
+
+  /* ===== ALERT UNTUK OBS ===== */
+  #obsAlert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(90deg, #00c853, #00e676);
+    color: #000;
+    padding: 18px 24px;
+    border-radius: 14px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 8px 30px rgba(0,230,118,0.5);
+    display: none;
+    z-index: 9999;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<h1>📶 Paket Data</h1>
+<p class="sub">Pilih paket, bayar via QRIS DANA, lalu kirim bukti ke live chat</p>
+
+<!-- DAFTAR PAKET -->
+<div class="grid" id="paketList"></div>
+
+<!-- QRIS -->
+<div class="qr-section">
+  <h2>💳 Scan QRIS untuk Bayar</h2>
+  <!-- GANTI src dengan gambar QRIS DANA kamu -->
+  <img id="qrImg" src="https://via.placeholder.com/220x220?text=QRIS+DANA" alt="QRIS DANA">
+  <p>Atas nama: <span class="dana">DANA Kamu</span></p>
+  <p>Setelah bayar, kirim bukti ke live chat YouTube</p>
+</div>
+
+<!-- ALERT OBS -->
+<div id="obsAlert">✅ Pembayaran diterima!</div>
+
+<script>
+  // ====== DATA PAKET (UBAH SESUAI KEBUTUHAN) ======
+  const paketData = [
+    { gb: "1 GB",  harga: "Rp 5.000",  label: "1 Hari" },
+    { gb: "3 GB",  harga: "Rp 10.000", label: "3 Hari" },
+    { gb: "5 GB",  harga: "Rp 15.000", label: "7 Hari" },
+    { gb: "10 GB", harga: "Rp 25.000", label: "30 Hari" },
+    { gb: "20 GB", harga: "Rp 45.000", label: "30 Hari" },
+    { gb: "50 GB", harga: "Rp 95.000", label: "30 Hari" },
+  ];
+
+  // ====== RENDER PAKET ======
+  const list = document.getElementById('paketList');
+  paketData.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="gb">${p.gb}</div>
+      <div class="label">${p.label}</div>
+      <div class="price">${p.harga}</div>
+      <button onclick="pilihPaket('${p.gb}', '${p.harga}')">Beli Sekarang</button>
+    `;
+    list.appendChild(div);
+  });
+
+  // ====== FUNGSI PILIH PAKET ======
+  function pilihPaket(gb, harga) {
+    // Scroll ke QRIS
+    document.querySelector('.qr-section').scrollIntoView({ behavior: 'smooth' });
+    // Tampilkan alert kecil
+    tampilAlert(`🛒 Paket ${gb} (${harga}) dipilih. Silakan scan QRIS.`, '#0077ff');
+  }
+
+  // ====== FUNGSI TAMPIL ALERT (BISA DIPANGGIL OBS) ======
+  function tampilAlert(pesan, warna = '#00e676') {
+    const el = document.getElementById('obsAlert');
+    el.textContent = pesan;
+    el.style.background = warna;
+    el.style.display = 'block';
+    clearTimeout(window._alertTimer);
+    window._alertTimer = setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  // ====== BAGIAN UNTUK OBS ======
+  // OBS Browser Source bisa memanggil URL:
+  // file:///path/ke/file.html?alert=Terima+kasih+User123
+  // atau http://alamat-website?alert=Terima+kasih
+  window.addEventListener('load', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('alert')) {
+      tampilAlert(params.get('alert'));
+    }
+  });
+
+  // Fungsi global untuk OBS Custom Browser Dock / control
+  window.obsAlert = tampilAlert;
+</script>
+
+</body>
+</html>
